@@ -1,4 +1,5 @@
 const http = require('http');
+const fs = require('fs');
 
 // function listener(req,res){
 //     return res.send('req')
@@ -6,34 +7,40 @@ const http = require('http');
 
  const server = http.createServer((req,res)=>{
     const url = req.url;
+    const method = req.method
     if(url==='/'){
-        res.setHeader('Content-type','text/html');
-        res.write(`<html>`)
-        res.write(`<h1>Hello this is node js server</h1>`);
-        res.write(`</html>`)
-        res.end();
+        fs.readFile("message.txt", 'utf8',(err,data)=>{
+            if(err){
+                console.log(err);
+                return ;
+            }
+            console.log(data)
+            res.write("<html>");
+            res.write(`<body>${data}</body>`);
+            res.write(`<body><form action="/message" method="POST"><input type="text" name="message"><button type="submit">Send</button></from></body>`);
+            res.write(`</html>`)
+            return  res.end();
+        })
+      
     }
-   else if (url==='/node'){
-        res.setHeader('Content-type','text/html');
-        res.write(`<html>`)
-        res.write(`<h1>Welcome to MY Node js Project </h1>`);
-        res.write(`</html>`)
-        res.end();
+   else if (url==='/message' && method ==='POST' ){
+        const body=[];
+        req.on('data',(dataPiece)=>{
+             console.log(dataPiece)
+             body.push(dataPiece);
+        })
+        return req.on('end',()=>{
+            const parseBody = Buffer.concat(body).toString();
+            const message = parseBody.split('=')[1];
+            fs.writeFile('message.txt',message,(error)=>{
+                res.statusCode=302;
+                res.setHeader('Location','/');
+                return res.end();
+            })
+        })
     }
-    else    if(url==='/home'){
-        res.setHeader('Content-type','text/html');
-        res.write(`<html>`)
-        res.write(`<h1>Welcome to Home Page </h1>`);
-        res.write(`</html>`)
-        res.end();
-    }
-    else if(url==='/about'){
-        res.setHeader('Content-type','text/html');
-        res.write(`<html>`)
-        res.write(`<h1>Welcome to About Page </h1>`);
-        res.write(`</html>`)
-        res.end();
-    }
+    
+   
    
 });
 
